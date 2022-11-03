@@ -118,7 +118,15 @@ class SOPDataset(BaseDataset):
 
         # Store file names for each image
         self.fileNames = [""]
-        imagesFileName = dataFolder / "Ebay_info.txt"
+        imagesFileName = dataFolder / "Ebay_train.txt"
+        with open(imagesFileName, "r") as imagesFile:
+            for i,line in enumerate(imagesFile):
+                if i == 0: continue
+                imageIdx, _, classIdx, path = line.strip().split(" ")
+                self.fileNames.append("")
+                imagePath = dataFolder / path
+                self.fileNames[int(imageIdx)] = str(imagePath)
+        imagesFileName = dataFolder / "Ebay_test.txt"
         with open(imagesFileName, "r") as imagesFile:
             for i,line in enumerate(imagesFile):
                 if i == 0: continue
