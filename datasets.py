@@ -5,6 +5,7 @@ from pathlib import Path
 import urllib.request
 import shutil
 from baseDataset import *
+import scipy.io as scio
 
 class CUBDataset(BaseDataset):
     """Dataset for the CUB data"""
@@ -150,13 +151,64 @@ class SOPDataset(BaseDataset):
         print("Done creating SOP dataset.")
 
 class CARDataset(BaseDataset):
-    pass
+    """Dataset for the CARS data"""
+    def __init__(self, dataFolder="data", outputShape=(100,100)):
+        """
+        Args:
+            dataFolder (string): path to data folder -- will be created if
+                it does not exist
+            outputShape (tuple (h, w)): output data size -- will be resized
+                using torchvision.transforms.Resize()
+        """
+        # Check if folder already exists, else download
+        carsFolder = Path(dataFolder) / "CARS"
+        annosFileLocation = carsFolder / "cars_annos.mat"
+        if not carsFolder.is_dir():
+            carsFolder.mkdir(parents=True, exist_ok=True)
 
+            # Download data tar
+            print("Downloading CARS data...")
+            fileLocation = carsFolder / "carsdata.tgz"
+            urlToDownload = "http://ai.stanford.edu/~jkrause/car196/car_ims.tgz"
+            urllib.request.urlretrieve(urlToDownload, str(fileLocation))
+            # Download annotations of class, train-test split, etc
+            urlToDownload = "http://ai.stanford.edu/~jkrause/car196/cars_annos.mat"
+            urllib.request.urlretrieve(urlToDownload, str(annosFileLocation))
+
+            print("Decompressing cars data...")
+            shutil.unpack_archive(fileLocation, extract_dir=str(carsFolder))
+            print("Decompressing done.")
+        annotations = scio.loadmat(str(annosFileLocation))
+
+        self.nClasses = len(annotations["class_names"][0])
+        self.classNames = [""] + [annotations["class_names"][0][i][0] for i in range(self.nClasses)]
+        self.train = True
+        self.outputShape = outputShape
+        self.transform = torchvision.transforms.Resize(outputShape)
+
+        self.indicesForClass = []
+        for _ in range(self.nClasses+1):
+            self.indicesForClass.append({"train":[], "test":[]})
+        self.fileNames = [""]
+        for i,annotation in enumerate(annotations["annotations"][0]):
+            fileName = annotation[0][0]
+            classLabel = annotation[5][0][0]
+            self.fileNames.append("")
+            self.fileNames[i+1] = str(carsFolder / fileName)
+            if annotation[6][0][0] == 0:
+                self.indicesForClass[classLabel]["train"].append(i+1)
+            elif annotation[6][0][0] == 1:
+                self.indicesForClass[classLabel]["test"].append(i+1)
+            else:
+                raise Exception("Error in CARS dataset!!!")
+
+        print("Done creating CARS dataset.")
+            
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    datasetNameList = [CUBDataset, SOPDataset]
-    params = {"batch_size":100, "num_workers":8, "shuffle":True}
+    datasetNameList = [CUBDataset, SOPDataset, CARDataset]
+    params = {"batch_size":30, "num_workers":8, "shuffle":True}
     for datasetName in datasetNameList:
         dataset = datasetName()
         dataset.printStats()
