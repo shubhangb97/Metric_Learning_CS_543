@@ -1,3 +1,7 @@
+# data folder --- too big for github, pickle files
+data/
+*.pickle
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
