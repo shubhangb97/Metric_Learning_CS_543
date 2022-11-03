@@ -11,7 +11,7 @@ def computeLoss(A, images):
     Args:
         A (torch.nn.Parameter): the matrix which must be multiplied
             with every input image to get output embedding
-        images ((batch_size x 200 x 3 x h x w) tensor): the list
+        images ((batch_size x nClass x 3 x h x w) tensor): the list
             of images given by the data loader. Note that A is 2D and
             has dimensions (d x h*w*3)
     Output:

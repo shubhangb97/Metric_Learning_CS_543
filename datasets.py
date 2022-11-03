@@ -156,10 +156,12 @@ if __name__ == "__main__":
         loader = torch.utils.data.DataLoader(dataset, **params)
 
         batch = next(iter(loader))
-        print(f"Used batch_size = {params['batch_size']} and got shape {batch.shape}")
+        print(f"Used batch_size = {params['batch_size']} and got shape {batch.shape}\n")
 
         classIdx = int(torch.randint(low=1, high=dataset.getNClasses()+1, size=(1,)))
-        images = batch[:, classIdx-1]
+        maxBatchIdx = min(len(dataset), params["batch_size"])
+        randomImageIdxs = torch.randint(low=0, high=maxBatchIdx, size=(20,))
+        images = batch[randomImageIdxs, classIdx-1]
         imageGrid = torchvision.utils.make_grid(images, nrow=5)
         imageGrid = imageGrid.numpy().transpose(1, 2, 0)
         plt.imshow(imageGrid/255.)

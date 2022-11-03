@@ -127,7 +127,7 @@ class BaseDataset(torch.utils.data.Dataset):
         print(f"    average image width  = {mu:.3f}, std = {std:.3f}")
         mu, std = np.mean(nImageList), np.std(nImageList)
         print(f"    average # of images per class = {mu:.3f}, std = {std:.3f}")
-        print(f"    minimum # of images in a class = {min(nImageList)}\n")
+        print(f"    minimum # of images in a class = {min(nImageList)}")
 
         self.train = oldTrain
 
