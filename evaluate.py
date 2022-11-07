@@ -56,6 +56,7 @@ def get_recall_and_NMI(model, dataloader):
     clusters = Kmeans(num_clusters)
     cluster_labels = clusters.fit(data_embedding.cpu().numpy(), num_classes).labels_
     nmi = NMI(cluster_labels , label_list.cpu().numpy())
+    print('NMI = {:.4f}'.format(nmi))
 
     distance_matrix = torch.cdist(data_embedding, data_embedding)
     recall_k_list = [1,2,4,8]

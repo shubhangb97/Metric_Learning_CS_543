@@ -4,6 +4,8 @@ import torch.nn as nn
 import numpy as np
 import tqdm
 from datasets import *
+import eval_dataset
+from evaluate import *
 
 def computeLoss(A, images):
     """
@@ -51,3 +53,12 @@ for epoch in range(nEpochs):
         optim.step()
     print(f"Done with {epoch+1}/{nEpochs} epochs")
 torch.save({"A":A}, fileToSaveA)
+
+
+testset= eval_dataset.load(name = ,  root = './data/', mode = 'eval',
+transform = dataset.utils.make_transform( is_train = False, is_inception = False ))
+testloader = torch.utils.data.DataLoader( testset, batch_size =128, shuffle = False,
+num_workers = 8, pin_memory = True,  drop_last = False  )
+# NOTE - if using batch size > 1 , model should be nn.module or similar capable of taking in a batched input
+
+recall, nmi = get_recall_and_NMI(model, testloader )
