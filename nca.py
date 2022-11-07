@@ -51,4 +51,3 @@ for epoch in range(nEpochs):
         optim.step()
     print(f"Done with {epoch+1}/{nEpochs} epochs")
 torch.save({"A":A}, fileToSaveA)
-
