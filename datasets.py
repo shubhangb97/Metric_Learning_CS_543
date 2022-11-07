@@ -218,7 +218,7 @@ if __name__ == "__main__":
         batch = next(iter(loader))
         print(f"Used batch_size = {params['batch_size']} and got shape {batch.shape}\n")
 
-        classIdx = int(torch.randint(low=1, high=dataset.getNClasses()+1, size=(1,)))
+        classIdx = int(torch.randint(low=1, high=int(dataset.getNClasses()/2)+1, size=(1,)))
         maxBatchIdx = min(len(dataset), params["batch_size"])
         randomImageIdxs = torch.randint(low=0, high=maxBatchIdx, size=(20,))
         images = batch[randomImageIdxs, classIdx-1]

@@ -28,12 +28,12 @@ class BaseDataset(torch.utils.data.Dataset):
         Use the getClassImage function for getting all images in
         non-random manner
         Output:
-            Tensor of size (200 x 3 x h x w ), one image for each
-                of the 200 classes
+            Tensor of size (nClasses/2 x 3 x h x w ), one image for each
+                of the first half of the  classes
         """
-        imageList = torch.zeros((self.nClasses, 3,
+        imageList = torch.zeros((int(self.nClasses/2), 3,
                                 self.outputShape[0], self.outputShape[1]))
-        for i in range(self.nClasses):
+        for i in range(int(self.nClasses/2)):
             whichData = "train" if self.train else "test"
             index = int(torch.randint(high=self.getClassLen(i+1), size=(1,)))
             imageIdx = self.indicesForClass[i+1][whichData][index]
