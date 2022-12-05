@@ -22,7 +22,7 @@ class BaseDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         """
-        The data is drawn randomly from the train or test datasets 
+        The data is drawn randomly from the train or test datasets
         depending on the value of self.train
         Argument index is ignored
         Use the getClassImage function for getting all images in
@@ -46,7 +46,7 @@ class BaseDataset(torch.utils.data.Dataset):
     def setTrain(self, train):
         """Set the dataset in train or test mode -- train is bool"""
         self.train = train
-    
+
     def getClassLen(self, classIdx):
         """
         Get # of images with label classIdx (subject to self.train)
@@ -54,10 +54,10 @@ class BaseDataset(torch.utils.data.Dataset):
         """
         whichData = "train" if self.train else "test"
         return len(self.indicesForClass[classIdx][whichData])
-    
+
     def getClassName(self, classIdx):
         return self.classNames[classIdx]
-    
+
     def getClassImage(self, classIdx, idx, applyTransform=True):
         """
         Get the idx-th image with label classIdx
@@ -81,7 +81,7 @@ class BaseDataset(torch.utils.data.Dataset):
     def getOutputShape(self):
         """Return self.outputShape"""
         return self.outputShape
-    
+
     def getNClasses(self):
         """Return number of classes"""
         return self.nClasses
@@ -130,4 +130,3 @@ class BaseDataset(torch.utils.data.Dataset):
         print(f"    minimum # of images in a class = {min(nImageList)}")
 
         self.train = oldTrain
-

@@ -1,5 +1,11 @@
 from sklearn.cluster import KMeans as KMeans
 from sklearn.metrics.cluster import normalized_mutual_info_score as NMI
+import numpy as np
+import torch
+from tqdm import tqdm
+import torch.nn.functional as F
+
+
 def get_full_recall(model, dataloader ):
     data_embedding, label_list = get_embedding(model, dataloader)
     distance_matrix = torch.cdist(data_embedding, data_embedding)
@@ -24,7 +30,7 @@ def get_recall(label_list, neighbors, k):
 
 def get_embedding(model, dataloader):
     model.eval()
-    total_images = len(dataloader)
+    total_images = len(dataloader.dataset)
     num_saved = 0
     with torch.no_grad():
         for images, labels in tqdm(dataloader):
@@ -36,6 +42,7 @@ def get_embedding(model, dataloader):
                 label_list = torch.zeros(total_images)
             full_embedding[num_saved:num_saved+embedding_batch.shape[0], :] = embedding_batch
             label_list[num_saved:num_saved+embedding_batch.shape[0]] = labels
+            num_saved = num_saved + embedding_batch.shape[0]
 
     model.train()
     return full_embedding, label_list
