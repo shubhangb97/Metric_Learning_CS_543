@@ -4,6 +4,8 @@ from deep_net.googlenet import *
 from tqdm import *
 from n_pair_loss import *
 from pdb import set_trace as breakpoint
+import eval_dataset
+from evaluate import *
 
 embed_size = 512
 num_epochs = 60
@@ -24,7 +26,7 @@ REQUIRES_OPTIM      = False
 trainset = eval_dataset.load(name = "cub",  root = './data/CUB/', mode = 'train', transform = eval_dataset.utils.make_transform())
 train_loader = torch.utils.data.DataLoader(trainset, batch_size = 100, shuffle = True, num_workers = 8, drop_last = True)
 
-testset= eval_dataset.load(name = ,  root = './data/', mode = 'eval', transform = dataset.utils.make_transform( is_train = False))
+testset= eval_dataset.load(name = 'cub',  root = './data/CUB/', mode = 'eval', transform = eval_dataset.utils.make_transform( is_train = False))
 test_loader = torch.utils.data.DataLoader( testset, batch_size =100, shuffle = False, num_workers = 8, pin_memory = True,  drop_last = False  )
 
 
@@ -32,7 +34,7 @@ test_loader = torch.utils.data.DataLoader( testset, batch_size =100, shuffle = F
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 
 # CAN ADD MORE MODELS
-model = googlenet_metric(embed_size=embed_size, pretrained=True)
+model = googlenet_metric(embed_size=embed_size)
 model.to(dev)
 
 model_params = [
@@ -61,12 +63,12 @@ for epoch in range(num_epochs):
         loss.backward()
         optim.step()
 
-        if(batch_idx %100 ==0):
+        if(batch_idx %20 ==0):
             losses_list.append(loss.item())
             print("Loss:", loss.item())
 
     scheduler.step()
-    if(epoch % test_interval == 0)
+    if(epoch % test_interval == 0):
         recall, nmi = get_recall_and_NMI(model, test_loader )
         val_recall_list.append(recall)
         val_nmi_list.append(nmi)
@@ -74,3 +76,4 @@ for epoch in range(num_epochs):
         train_recall, train_nmi = get_recall_and_NMI(model, train_loader )
         train_recall_list.append(train_recall)
         train_nmi_list.append(train_nmi)
+

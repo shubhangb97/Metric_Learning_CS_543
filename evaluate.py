@@ -32,10 +32,11 @@ def get_embedding(model, dataloader):
     model.eval()
     total_images = len(dataloader.dataset)
     num_saved = 0
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
     with torch.no_grad():
         for images, labels in tqdm(dataloader):
-            images = images.cuda()
-            labels = labels.cuda()
+            images = images.to(dev)
+            labels = labels.to(dev)
             embedding_batch = model(images)
             if(num_saved == 0):
                 full_embedding = torch.zeros(total_images, embedding_batch.shape[1])
@@ -51,8 +52,8 @@ def get_NMI(model, dataloader):
     data_embedding, label_list = get_embedding(model, dataloader)
     num_clusters = dataloader.dataset.n_classes
 
-    clusters = Kmeans(num_clusters)
-    cluster_labels = clusters.fit(data_embedding.cpu().numpy(), num_classes).labels_
+    clusters = KMeans(num_clusters)
+    cluster_labels = clusters.fit(data_embedding.cpu().numpy(), num_clusters).labels_
     nmi = NMI(cluster_labels , label_list)
     return nmi
 
@@ -60,8 +61,8 @@ def get_recall_and_NMI(model, dataloader):
     data_embedding, label_list = get_embedding(model, dataloader)
     num_clusters = dataloader.dataset.n_classes
 
-    clusters = Kmeans(num_clusters)
-    cluster_labels = clusters.fit(data_embedding.cpu().numpy(), num_classes).labels_
+    clusters = KMeans(num_clusters)
+    cluster_labels = clusters.fit(data_embedding.cpu().numpy(), num_clusters).labels_
     nmi = NMI(cluster_labels , label_list.cpu().numpy())
     print('NMI = {:.4f}'.format(nmi))
 

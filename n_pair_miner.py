@@ -3,11 +3,11 @@ import torch, torch.nn as nn, torch.nn.functional as F
 
 # Refer to https://github.com/Confusezius/Revisiting_Deep_Metric_Learning_PyTorch
 
-def n_pair_miner(images, labels):
+def n_pair_miner(labels):
     labels = labels.detach().cpu().numpy()
     anchors, positives, negatives = [],[],[]
 
-    for i in range(len(images)):
+    for i in range(len(labels)):
         anchor = i
         pos    = labels==labels[anchor]
 
@@ -21,9 +21,10 @@ def n_pair_miner(images, labels):
     ###
     negatives = []
     for anchor,positive in zip(anchors, positives):
-        neg_idxs = [i for i in range(len(batch)) if i not in [anchor, positive] and labels[i] != labels[anchor]]
+        neg_idxs = [i for i in range(len(labels)) if i not in [anchor, positive] and labels[i] != labels[anchor]]
         # neg_idxs = [i for i in range(len(batch)) if i not in [anchor, positive]]
-        negative_set = np.arange(len(batch))[neg_idxs]
-        negatives.append(negative_set)
+        #negative_set = np.arange(len(batch))[neg_idxs]
+        #negatives.append(negative_set)
+        negatives.append(np.array(neg_idxs))
 
     return anchors, positives, negatives

@@ -20,6 +20,10 @@ class BaseDataset(torch.utils.data.Dataset):
         assert set(self.ys) == set(self.classes)
         return len(self.classes)
 
+    @property
+    def n_classes(self):
+        return len(self.classes)
+
     def __len__(self):
         return len(self.ys)
 
