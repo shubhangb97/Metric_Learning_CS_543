@@ -8,7 +8,7 @@ import eval_dataset
 from evaluate import *
 
 embed_size = 512
-num_epochs = 60
+num_epochs = 30
 lr = 1e-4
 fc_lr = 5e-4
 weight_decay = 1e-4
@@ -16,6 +16,7 @@ lr_decay_step = 10
 lr_decay_gamma = 0.5
 test_interval = 5
 n_pair_l2_reg = 0.001
+save_model_dict_path = './n_pair_model_dict.pt'
 
 
 ALLOWED_MINING_OPS = ['npair']
@@ -76,4 +77,6 @@ for epoch in range(num_epochs):
         train_recall, train_nmi = get_recall_and_NMI(model, train_loader )
         train_recall_list.append(train_recall)
         train_nmi_list.append(train_nmi)
+
+        torch.save(model.state_dict(), save_model_dict_path)
 

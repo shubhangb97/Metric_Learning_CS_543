@@ -1,6 +1,7 @@
-# data folder --- too big for github, pickle files
+# data folder --- too big for github, pickle files, pytorch saved models
 data/
 *.pickle
+*.pt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
