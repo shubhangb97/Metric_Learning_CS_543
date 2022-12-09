@@ -12,7 +12,7 @@ class n_pair_loss(torch.nn.Module):
     def forward(self, image_embed, labels):
         #anc_ind, pos_ind, neg_ind = n_pair_miner(image_embed, labels)
         anc_ind, pos_ind, neg_ind = n_pair_miner(labels)
-        loss = 0.
+        loss = 0.*torch.sum(image_embed[0])
         #lossReference = 0.
         for num1 in range(len(anc_ind)):
             anc = image_embed[anc_ind[num1],:]

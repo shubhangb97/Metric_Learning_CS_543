@@ -16,21 +16,29 @@ lr_decay_step = 10
 lr_decay_gamma = 0.5
 test_interval = 5
 n_pair_l2_reg = 0.001
-save_model_dict_path = './n_pair_model_dict.pt'
 
 
 ALLOWED_MINING_OPS = ['npair']
 REQUIRES_BATCHMINER = True
 REQUIRES_OPTIM      = False
 
+whichDataset = 'cub' # Choose from cub, cars, or SOP (works if you downloaded data using datasets.py)
+save_model_dict_path = f'./n_pair_model_dict_{whichDataset}.pt'
 
-trainset = eval_dataset.load(name = "cub",  root = './data/CUB/', mode = 'train', transform = eval_dataset.utils.make_transform())
-train_loader = torch.utils.data.DataLoader(trainset, batch_size = 100, shuffle = True, num_workers = 8, drop_last = True)
+trainset = eval_dataset.load(name=whichDataset,
+                            root='./data/'+whichDataset.upper()+'/',
+                            mode='train',
+                            transform = eval_dataset.utils.make_transform())
+train_loader = torch.utils.data.DataLoader(trainset, batch_size = 100,
+                        shuffle = True, num_workers = 8, drop_last = True)
 
-testset= eval_dataset.load(name = 'cub',  root = './data/CUB/', mode = 'eval', transform = eval_dataset.utils.make_transform( is_train = False))
-test_loader = torch.utils.data.DataLoader( testset, batch_size =100, shuffle = False, num_workers = 8, pin_memory = True,  drop_last = False  )
-
-
+testset= eval_dataset.load(name=whichDataset,
+                            root='./data/'+whichDataset.upper()+'/',
+                            mode='eval',
+                            transform = eval_dataset.utils.make_transform(is_train=False))
+test_loader = torch.utils.data.DataLoader(testset, batch_size =100,
+                        shuffle=False, num_workers=8, pin_memory=True,
+                        drop_last=False)
 
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -55,7 +63,7 @@ val_nmi_list = []
 best_recall = -1
 
 for epoch in range(num_epochs):
-    for batch_idx , (images, labels) in tqdm(enumerate(train_loader)):
+    for batch_idx , (images, labels) in enumerate(tqdm(train_loader)):
         model.train()
 
         embed_image = model(images.to(dev))
@@ -79,4 +87,14 @@ for epoch in range(num_epochs):
         train_nmi_list.append(train_nmi)
 
         torch.save(model.state_dict(), save_model_dict_path)
+
+torch.save(model.state_dict(), save_model_dict_path)
+print('\n\nFor the final model found:')
+recall, nmi = get_recall_and_NMI(model, test_loader )
+val_recall_list.append(recall)
+val_nmi_list.append(nmi)
+
+train_recall, train_nmi = get_recall_and_NMI(model, train_loader )
+train_recall_list.append(train_recall)
+train_nmi_list.append(train_nmi)
 
