@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import torch.nn.functional as F
+from pdb import set_trace as breakpoint
 
 
 def get_full_recall(model, dataloader ):
@@ -23,6 +24,7 @@ def get_recall(label_list, neighbors, k):
     matches = 0
     num1 = 0
     for num1 in range(label_list.shape[0]):
+        #breakpoint()
         if(label_list[num1] in label_list[neighbors[num1,:k]] ):
             matches+=1
     recall_k = matches / label_list.shape[0]
@@ -56,23 +58,32 @@ def get_NMI(model, dataloader):
     cluster_labels = clusters.fit(data_embedding.cpu().numpy(), num_clusters).labels_
     nmi = NMI(cluster_labels , label_list)
     return nmi
-def get_recall_and_NMI_SOP(model, dataloader):
+def get_recall_SOP(model, dataloader):
     data_embedding, label_list = get_embedding(model, dataloader)
-    num_clusters = dataloader.dataset.n_classes
+    # num_clusters = dataloader.dataset.n_classes
+    #
+    # clusters = KMeans(num_clusters)
+    # cluster_labels = clusters.fit(data_embedding.cpu().numpy(), num_clusters).labels_
+    # nmi = NMI(cluster_labels , label_list.cpu().numpy())
+    # print('NMI = {:.4f}'.format(nmi))
 
-    clusters = KMeans(num_clusters)
-    cluster_labels = clusters.fit(data_embedding.cpu().numpy(), num_clusters).labels_
-    nmi = NMI(cluster_labels , label_list.cpu().numpy())
-    print('NMI = {:.4f}'.format(nmi))
-
-    neighbors = torch.zeros((data_embedding.shape[0], 1000), dtype = torch.float)
+    neighbors = torch.zeros((data_embedding.shape[0], 1000), dtype = torch.long)
     recall_k_list = [1, 10, 100, 1000]
     batch_size = 1000
+    num1 = 0
     while(num1+batch_size < data_embedding.shape[0]):
+        #breakpoint()
         distances = torch.cdist(data_embedding[num1:num1+batch_size,:], data_embedding)
-        num1 = num1 + batch_size
         neighbors_part = distances.topk(recall_k_list[len(recall_k_list) - 1]+1, largest = False)[1][:,1:recall_k_list[len(recall_k_list) - 1]+1]
+        #breakpoint()
         neighbors[num1:num1+batch_size,:] = neighbors_part
+        #breakpoint()
+        num1 = num1 + batch_size
+
+    distances = torch.cdist(data_embedding[num1:,:], data_embedding)
+    neighbors_part = distances.topk(recall_k_list[len(recall_k_list) - 1]+1, largest = False)[1][:,1:recall_k_list[len(recall_k_list) - 1]+1]
+    #breakpoint()
+    neighbors[num1:,:] = neighbors_part
      # as 0 th element is the trivially the same point
     recalls = []
     for k in recall_k_list:
@@ -80,7 +91,7 @@ def get_recall_and_NMI_SOP(model, dataloader):
         recalls.append(recall)
         print("Recall@{} {:.4f}".format(k,recall*100))
 
-    return recalls, nmi
+    return recalls
 
 
 

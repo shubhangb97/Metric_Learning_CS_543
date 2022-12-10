@@ -18,7 +18,7 @@ def save_dict(path, whichDataset, losses_list, train_recall_list, val_recall_lis
     info_dict['best_recall'] = best_recall
     if(not(os.path.exists(path) ) ):
         os.mkdir(path)
-    torch.save(path+'/'+whichDataset+'_info_dict_n_pair.log')
+    torch.save(info_dict, path+'/'+whichDataset+'_info_dict_n_pair.log')
 
 embed_size = 512
 num_epochs = 30
@@ -27,7 +27,7 @@ fc_lr = 5e-4
 weight_decay = 1e-4
 lr_decay_step = 10
 lr_decay_gamma = 0.5
-test_interval = 1
+test_interval = 10
 n_pair_l2_reg = 0.001
 
 
@@ -35,7 +35,7 @@ ALLOWED_MINING_OPS = ['npair']
 REQUIRES_BATCHMINER = True
 REQUIRES_OPTIM      = False
 
-whichDataset = 'SOP'#'cub' # Choose from cub, cars, or SOP (works if you downloaded data using datasets.py)
+whichDataset = 'cub'#'cub' # Choose from cub, cars, or SOP (works if you downloaded data using datasets.py)
 if(whichDataset =='cub'):
     n_classes = 100
 elif(whichDataset == 'cars'):
@@ -91,7 +91,8 @@ for epoch in range(num_epochs):
         model.train()
 
         embed_image = model(images.to(dev))
-        loss = criterion_npair(embed_image, labels.to(dev))
+        loss = criterion_pnca(embed_image, labels.to(dev))
+        #breakpoint()
         optim.zero_grad()
         loss.backward()
         optim.step()

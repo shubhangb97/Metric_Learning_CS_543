@@ -18,7 +18,7 @@ def save_dict(path, whichDataset, losses_list, train_recall_list, val_recall_lis
     info_dict['best_recall'] = best_recall
     if(not(os.path.exists(path) ) ):
         os.mkdir(path)
-    torch.save(path+'/'+whichDataset+'_info_dict_n_pair.log')
+    torch.save(info_dict, path+'/'+whichDataset+'_info_dict_n_pair.log')
 
 embed_size = 512
 num_epochs = 30
@@ -93,14 +93,16 @@ for epoch in range(num_epochs):
     scheduler.step()
     if(epoch % test_interval == 0):
         if(whichDataset == 'SOP'):
-            recall, nmi = get_recall_and_NMI_SOP(model, test_loader )
+            recall = get_recall_SOP(model, test_loader )
+            nmi= 0
         else:
             recall, nmi = get_recall_and_NMI(model, test_loader )
         val_recall_list.append(recall)
         val_nmi_list.append(nmi)
 
         if(whichDataset == 'SOP'):
-            train_recall, train_nmi = get_recall_and_NMI_SOP(model, train_loader )
+            train_recall= get_recall_SOP(model, train_loader )
+            train_nmi = 0
         else:
             train_recall, train_nmi = get_recall_and_NMI(model, train_loader )
         train_recall_list.append(train_recall)
