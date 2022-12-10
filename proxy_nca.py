@@ -2,7 +2,7 @@ import numpy as np
 import torch, torch.nn as nn, torch.nn.functional as F
 from deep_net.googlenet import *
 from tqdm import *
-from n_pair_loss import *
+from pnca_loss import *
 from pdb import set_trace as breakpoint
 import eval_dataset
 from evaluate import *
@@ -27,7 +27,7 @@ fc_lr = 5e-4
 weight_decay = 1e-4
 lr_decay_step = 10
 lr_decay_gamma = 0.5
-test_interval = 1
+test_interval = 10
 n_pair_l2_reg = 0.001
 
 
@@ -35,7 +35,16 @@ ALLOWED_MINING_OPS = ['npair']
 REQUIRES_BATCHMINER = True
 REQUIRES_OPTIM      = False
 
-whichDataset = 'SOP'#'cub' # Choose from cub, cars, or SOP (works if you downloaded data using datasets.py)
+whichDataset = 'cub'#'cub' # Choose from cub, cars, or SOP (works if you downloaded data using datasets.py)
+if(whichDataset =='cub'):
+    n_classes = 100
+elif(whichDataset == 'cars'):
+    n_classes = 98
+elif(whichDataset == 'SOP'):
+    n_classes = 11318
+else:
+    print('Specify correct dataset name')
+    quit()
 save_model_dict_path = f'./n_pair_model_dict_{whichDataset}.pt'
 info_save_path = './results'
 
@@ -63,11 +72,12 @@ model.to(dev)
 model_params = [
     {'params': list(set(model.parameters()).difference(set(model.model.embed_fc.parameters())))},
     {'params': model.model.embed_fc.parameters(), 'lr':float(fc_lr) }]
+criterion_pnca = pnca_loss(n_classes, embed_size)
+criterion_pnca.to(dev)
+model_params.append({'params': criterion_pnca.parameters(), 'lr':float(lr)})
 
 optim = torch.optim.Adam(model_params, lr=float(lr), weight_decay = weight_decay)
 scheduler = torch.optim.lr_scheduler.StepLR(optim, step_size= lr_decay_step, gamma = lr_decay_gamma)
-criterion_npair = n_pair_loss(n_pair_l2_reg)
-criterion_npair.to(dev)
 
 losses_list = []
 train_recall_list=[]
@@ -81,7 +91,8 @@ for epoch in range(num_epochs):
         model.train()
 
         embed_image = model(images.to(dev))
-        loss = criterion_npair(embed_image, labels.to(dev))
+        loss = criterion_pnca(embed_image, labels.to(dev))
+        #breakpoint()
         optim.zero_grad()
         loss.backward()
         optim.step()
@@ -93,15 +104,15 @@ for epoch in range(num_epochs):
     scheduler.step()
     if(epoch % test_interval == 0):
         if(whichDataset == 'SOP'):
-            recall = get_recall_SOP(model, test_loader )
-            nmi= 0
+            recall, nmi = get_recall_SOP(model, test_loader )
+            nmi = 0
         else:
             recall, nmi = get_recall_and_NMI(model, test_loader )
         val_recall_list.append(recall)
         val_nmi_list.append(nmi)
 
         if(whichDataset == 'SOP'):
-            train_recall= get_recall_SOP(model, train_loader )
+            train_recall, train_nmi = get_recall_SOP(model, train_loader )
             train_nmi = 0
         else:
             train_recall, train_nmi = get_recall_and_NMI(model, train_loader )
