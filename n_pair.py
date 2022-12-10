@@ -6,8 +6,20 @@ from n_pair_loss import *
 from pdb import set_trace as breakpoint
 import eval_dataset
 from evaluate import *
+import os
 
-#def save_dict(path, ):
+def save_dict(path, whichDataset, losses_list, train_recall_list, val_recall_list , train_nmi_list, val_nmi_list, best_recall ):
+    info_dict= {}
+    info_dict['losses'] = losses_list
+    info_dict['train_recall'] = train_recall_list
+    info_dict['val_recall'] = val_recall_list
+    info_dict['train_nmi'] = train_nmi_list
+    info_dict['val_nmi'] = val_nmi_list
+    info_dict['best_recall'] = best_recall
+    if(not(os.path.exists(path) ) ):
+        os.mkdir(path)
+    torch.save(path+'/'+whichDataset+'_info_dict_n_pair.log')
+
 embed_size = 512
 num_epochs = 30
 lr = 1e-4
@@ -25,6 +37,7 @@ REQUIRES_OPTIM      = False
 
 whichDataset = 'SOP'#'cub' # Choose from cub, cars, or SOP (works if you downloaded data using datasets.py)
 save_model_dict_path = f'./n_pair_model_dict_{whichDataset}.pt'
+info_save_path = './results'
 
 trainset = eval_dataset.load(name=whichDataset,
                             root='./data/'+whichDataset.upper()+'/',
@@ -93,6 +106,7 @@ for epoch in range(num_epochs):
         train_recall_list.append(train_recall)
         train_nmi_list.append(train_nmi)
 
+        save_dict(info_save_path, whichDataset, losses_list, train_recall_list, val_recall_list , train_nmi_list, val_nmi_list, best_recall )
         torch.save(model.state_dict(), save_model_dict_path)
 
 torch.save(model.state_dict(), save_model_dict_path)
