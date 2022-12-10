@@ -56,6 +56,33 @@ def get_NMI(model, dataloader):
     cluster_labels = clusters.fit(data_embedding.cpu().numpy(), num_clusters).labels_
     nmi = NMI(cluster_labels , label_list)
     return nmi
+def get_recall_and_NMI_SOP(model, dataloader):
+    data_embedding, label_list = get_embedding(model, dataloader)
+    num_clusters = dataloader.dataset.n_classes
+
+    clusters = KMeans(num_clusters)
+    cluster_labels = clusters.fit(data_embedding.cpu().numpy(), num_clusters).labels_
+    nmi = NMI(cluster_labels , label_list.cpu().numpy())
+    print('NMI = {:.4f}'.format(nmi))
+
+    neighbors = torch.zeros((data_embedding.shape[0], 1000), dtype = torch.float)
+    recall_k_list = [1, 10, 100, 1000]
+    batch_size = 1000
+    while(num1+batch_size < data_embedding.shape[0]):
+        distances = torch.cdist(data_embedding[num1:num1+batch_size,:], data_embedding)
+        num1 = num1 + batch_size
+        neighbors_part = distances.topk(recall_k_list[len(recall_k_list) - 1]+1, largest = False)[1][:,1:recall_k_list[len(recall_k_list) - 1]+1]
+        neighbors[num1:num1+batch_size,:] = neighbors_part
+     # as 0 th element is the trivially the same point
+    recalls = []
+    for k in recall_k_list:
+        recall = get_recall(label_list, neighbors, k)
+        recalls.append(recall)
+        print("Recall@{} {:.4f}".format(k,recall*100))
+
+    return recalls, nmi
+
+
 
 def get_recall_and_NMI(model, dataloader):
     data_embedding, label_list = get_embedding(model, dataloader)

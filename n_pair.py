@@ -7,6 +7,7 @@ from pdb import set_trace as breakpoint
 import eval_dataset
 from evaluate import *
 
+#def save_dict(path, ):
 embed_size = 512
 num_epochs = 30
 lr = 1e-4
@@ -14,7 +15,7 @@ fc_lr = 5e-4
 weight_decay = 1e-4
 lr_decay_step = 10
 lr_decay_gamma = 0.5
-test_interval = 5
+test_interval = 1
 n_pair_l2_reg = 0.001
 
 
@@ -22,7 +23,7 @@ ALLOWED_MINING_OPS = ['npair']
 REQUIRES_BATCHMINER = True
 REQUIRES_OPTIM      = False
 
-whichDataset = 'cub' # Choose from cub, cars, or SOP (works if you downloaded data using datasets.py)
+whichDataset = 'SOP'#'cub' # Choose from cub, cars, or SOP (works if you downloaded data using datasets.py)
 save_model_dict_path = f'./n_pair_model_dict_{whichDataset}.pt'
 
 trainset = eval_dataset.load(name=whichDataset,
@@ -72,17 +73,23 @@ for epoch in range(num_epochs):
         loss.backward()
         optim.step()
 
-        if(batch_idx %20 ==0):
+        if(batch_idx %1000 ==0):
             losses_list.append(loss.item())
             print("Loss:", loss.item())
 
     scheduler.step()
     if(epoch % test_interval == 0):
-        recall, nmi = get_recall_and_NMI(model, test_loader )
+        if(whichDataset == 'SOP'):
+            recall, nmi = get_recall_and_NMI_SOP(model, test_loader )
+        else:
+            recall, nmi = get_recall_and_NMI(model, test_loader )
         val_recall_list.append(recall)
         val_nmi_list.append(nmi)
 
-        train_recall, train_nmi = get_recall_and_NMI(model, train_loader )
+        if(whichDataset == 'SOP'):
+            train_recall, train_nmi = get_recall_and_NMI_SOP(model, train_loader )
+        else:
+            train_recall, train_nmi = get_recall_and_NMI(model, train_loader )
         train_recall_list.append(train_recall)
         train_nmi_list.append(train_nmi)
 
@@ -97,4 +104,3 @@ val_nmi_list.append(nmi)
 train_recall, train_nmi = get_recall_and_NMI(model, train_loader )
 train_recall_list.append(train_recall)
 train_nmi_list.append(train_nmi)
-
