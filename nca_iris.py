@@ -5,8 +5,10 @@ import numpy as np
 import tqdm
 import os
 
+from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
+from sklearn import datasets
 
 def computeLoss(A, X, y_mask):
     """
@@ -50,77 +52,48 @@ def squared_euclidean_distance(vec):
     return d.float()
 
 
-data_path = './uspsdata/' # digit dataset from the paper
-if not os.path.exists(data_path):
-    os.makedirs(data_path)
-
-
-batch_size = 64
-latentDims = 32
-nEpochs = 100
-
-train_data = torchvision.datasets.USPS('./uspsdata/', train=True, download=True,
-                             transform=torchvision.transforms.Compose([
-                               torchvision.transforms.ToTensor(),
-                               torchvision.transforms.Normalize(
-                                 (0.1307,), (0.3081,))
-                             ]))
-
-test_data = torchvision.datasets.USPS('./uspsdata/', train=False, download=True,
-                             transform=torchvision.transforms.Compose([
-                               torchvision.transforms.ToTensor(),
-                               torchvision.transforms.Normalize(
-                                 (0.1307,), (0.3081,))
-                             ]))
+dataset = datasets.load_iris()
 
 
 train_acc_vec, test_acc_vec = [], []
 # 10 repeats
 for i in range(10):
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=True)
 
-    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    X_train, X_test, y_train, y_test = train_test_split(dataset.data, dataset.target, 
+        train_size=0.7, random_state = i)
 
-    h, w = next(iter(train_loader))[0].shape[-2:]
+    X_train = torch.Tensor(X_train).float()
+    X_test = torch.Tensor(X_test).float()
+    y_train = torch.Tensor(y_train).long()
+    y_test = torch.Tensor(y_test).long()
 
-    X_train = train_data.data.reshape(-1, h*w)
-    y_train = train_data.targets
-    X_test = test_data.data.reshape(-1, h*w)
-    y_test = test_data.targets
+    nEpochs = 100
 
-    #a = torch.randn(h*w, h*w) * 0.01  #full A
-    a = torch.randn(2, h*w) * 0.01  #rank 2 transformation
+    #a = torch.randn(4, 4) #full A
+    a = torch.randn(2, 4) #rank-2 transformation
     A = nn.Parameter(a)
 
     optim = torch.optim.Adam([A], lr=1e-04)
 
+    y_mask = y_train[:, None] == y_train[None, :]
     for epoch in range(nEpochs):
-        running_loss = 0
-
-        for images, labels in train_loader:
             
-            optim.zero_grad()
-            
-            X = images.reshape((-1, h*w))
-            y_mask = labels[:, None] == labels[None, :] # pairwise boolean class matrix
+        optim.zero_grad()
 
-            loss = computeLoss(A, X, y_mask)
+        loss = computeLoss(A, X_train, y_mask)
 
-            loss.backward()
+        loss.backward()
 
-            optim.step()
+        optim.step()
 
-            running_loss += loss.item()
-
-        #print(f"Epoch {epoch+1}/{nEpochs}: {running_loss * batch_size / len(train_data) :.4f}")
+        #print(f"Epoch {epoch+1}/{nEpochs}: {loss.item():.4f}")
 
     # Find the train and test accuracies
     A = A.detach().cpu().numpy()
 
     X_train_embed = X_train @ A.T
     X_test_embed = X_test @ A.T
-    knn = KNeighborsClassifier(n_neighbors = 5)
+    knn = KNeighborsClassifier(n_neighbors = 3)
     knn.fit(X_train_embed, y_train)
     train_pred = knn.predict(X_train_embed)
     test_pred = knn.predict(X_test_embed)
@@ -138,3 +111,5 @@ for i in range(10):
 print("\nOverall")
 print(f"Train: {np.mean(train_acc_vec):.3f} +/- {np.std(train_acc_vec):.3f}")
 print(f"Test: {np.mean(test_acc_vec):.3f} +/- {np.std(test_acc_vec):.3f}")
+
+
