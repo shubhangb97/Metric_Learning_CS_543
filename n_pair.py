@@ -7,8 +7,9 @@ from pdb import set_trace as breakpoint
 import eval_dataset
 from evaluate import *
 import os
+import time
 
-def save_dict(path, whichDataset, losses_list, train_recall_list, val_recall_list , train_nmi_list, val_nmi_list, best_recall ):
+def save_dict(path, whichDataset, losses_list, train_recall_list, val_recall_list , train_nmi_list, val_nmi_list, best_recall, timeSpent):
     info_dict= {}
     info_dict['losses'] = losses_list
     info_dict['train_recall'] = train_recall_list
@@ -16,6 +17,7 @@ def save_dict(path, whichDataset, losses_list, train_recall_list, val_recall_lis
     info_dict['train_nmi'] = train_nmi_list
     info_dict['val_nmi'] = val_nmi_list
     info_dict['best_recall'] = best_recall
+    info_dict['timeSpent'] = timeSpent
     if(not(os.path.exists(path) ) ):
         os.mkdir(path)
     torch.save(info_dict, path+'/'+whichDataset+'_info_dict_n_pair.log')
@@ -35,7 +37,7 @@ ALLOWED_MINING_OPS = ['npair']
 REQUIRES_BATCHMINER = True
 REQUIRES_OPTIM      = False
 
-whichDataset = 'SOP'#'cub' # Choose from cub, cars, or SOP (works if you downloaded data using datasets.py)
+whichDataset = 'cub'#'cub' # Choose from cub, cars, or SOP (works if you downloaded data using datasets.py)
 save_model_dict_path = f'./n_pair_model_dict_{whichDataset}.pt'
 info_save_path = './results'
 
@@ -76,6 +78,7 @@ train_nmi_list=[]
 val_nmi_list = []
 best_recall = -1
 
+startTime = time.time()
 for epoch in range(num_epochs):
     for batch_idx , (images, labels) in enumerate(tqdm(train_loader)):
         model.train()
@@ -108,15 +111,28 @@ for epoch in range(num_epochs):
         train_recall_list.append(train_recall)
         train_nmi_list.append(train_nmi)
 
-        save_dict(info_save_path, whichDataset, losses_list, train_recall_list, val_recall_list , train_nmi_list, val_nmi_list, best_recall )
+        timeTillNow = time.time()
+        save_dict(info_save_path, whichDataset, losses_list, train_recall_list, val_recall_list , train_nmi_list, val_nmi_list, best_recall, timeTillNow-startTime)
         torch.save(model.state_dict(), save_model_dict_path)
 
-torch.save(model.state_dict(), save_model_dict_path)
 print('\n\nFor the final model found:')
-recall, nmi = get_recall_and_NMI(model, test_loader )
+if(whichDataset == 'SOP'):
+    recall = get_recall_SOP(model, test_loader )
+    nmi= 0
+else:
+    recall, nmi = get_recall_and_NMI(model, test_loader )
 val_recall_list.append(recall)
 val_nmi_list.append(nmi)
 
-train_recall, train_nmi = get_recall_and_NMI(model, train_loader )
+if(whichDataset == 'SOP'):
+    train_recall= get_recall_SOP(model, train_loader )
+    train_nmi = 0
+else:
+    train_recall, train_nmi = get_recall_and_NMI(model, train_loader )
 train_recall_list.append(train_recall)
 train_nmi_list.append(train_nmi)
+
+timeTillNow = time.time()
+save_dict(info_save_path, whichDataset, losses_list, train_recall_list, val_recall_list , train_nmi_list, val_nmi_list, best_recall, timeTillNow-startTime)
+torch.save(model.state_dict(), save_model_dict_path)
+
