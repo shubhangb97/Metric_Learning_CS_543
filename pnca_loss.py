@@ -1,10 +1,9 @@
 import numpy as np
 import torch, torch.nn as nn, torch.nn.functional as F
-from n_pair_miner import *
 
 class pnca_loss(torch.nn.Module):
     """Proxy NCA DML"""
-    def __init__(self, n_classes, embed_size, alpha = 1, mrg = 0.1):
+    def __init__(self, n_classes, embed_size, alpha = 1, mrg = 1):
         super(pnca_loss, self).__init__()
         #self.pars = opt
         self.proxies = torch.nn.Parameter(torch.randn(n_classes, embed_size) )
@@ -21,6 +20,6 @@ class pnca_loss(torch.nn.Module):
         #breakpoint()
         denom = exp_dist.sum(dim = 1)
         loss = torch.log(numerators / denom)
-
+        # included positive proxy also in denominator, as said to improve perf in proxy nca++
         loss = loss.sum()
         return loss
